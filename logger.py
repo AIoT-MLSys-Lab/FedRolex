@@ -1,7 +1,9 @@
 from collections import defaultdict
 from collections.abc import Iterable
-from torch.utils.tensorboard import SummaryWriter
 from numbers import Number
+
+from torch.utils.tensorboard import SummaryWriter
+
 from utils import ntuple
 
 

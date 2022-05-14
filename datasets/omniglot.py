@@ -1,8 +1,10 @@
-import anytree
 import os
+
+import anytree
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
+
 from utils import check_exists, makedir_exist_ok, save, load
 from .utils import IMG_EXTENSIONS
 from .utils import download_url, extract_file, make_classes_counts, make_data, make_tree, make_flat_index

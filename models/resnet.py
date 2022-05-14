@@ -2,8 +2,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .utils import init_param
+
 from modules import Scaler
+from .utils import init_param
 
 
 class Block(nn.Module):
@@ -128,7 +129,6 @@ class ResNet(nn.Module):
         else:
             self.scaler = nn.Identity()
         self.linear = nn.Linear(hidden_size[3] * block.expansion, num_classes)
-
 
     def _make_layer(self, block, planes, num_blocks, stride, rate, track):
         cfg = self.cfg

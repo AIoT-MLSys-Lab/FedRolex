@@ -1,7 +1,8 @@
-import time
 import datetime
-import torch
+import time
+
 import ray
+import torch
 
 import models
 from data import SplitDataset, make_data_loader

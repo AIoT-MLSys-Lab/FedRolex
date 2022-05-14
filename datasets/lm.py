@@ -1,7 +1,9 @@
 import os
-import torch
 from abc import abstractmethod
+
+import torch
 from torch.utils.data import Dataset
+
 from utils import check_exists, makedir_exist_ok, save, load
 from .utils import download_url, extract_file
 

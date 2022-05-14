@@ -2,9 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .utils import init_param
 from torch.nn import TransformerEncoder
+
 from modules import Scaler
+from .utils import init_param
 
 
 class PositionalEmbedding(nn.Module):

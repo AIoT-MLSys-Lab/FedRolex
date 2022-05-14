@@ -1,10 +1,12 @@
-import anytree
-import numpy as np
 import os
 import shutil
+
+import anytree
+import numpy as np
 import torch
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset
+
 from utils import check_exists, save, load
 from .utils import extract_file, make_classes_counts, make_img, make_tree, make_flat_index
 

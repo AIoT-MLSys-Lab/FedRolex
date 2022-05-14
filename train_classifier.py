@@ -1,16 +1,17 @@
 import argparse
 import datetime
-import models
 import os
 import shutil
 import time
+
 import torch
 import torch.backends.cudnn as cudnn
+
 from config import cfg
 from data import fetch_dataset, make_data_loader
+from logger import Logger
 from metrics import Metric
 from utils import save, to_device, process_control, process_dataset, make_optimizer, make_scheduler, resume, collate
-from logger import Logger
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 torch.backends.cudnn.deterministic = True
@@ -112,7 +113,7 @@ def train(data_loader, model, optimizer, logger, epoch):
             lr = optimizer.param_groups[0]['lr']
             epoch_finished_time = datetime.timedelta(seconds=round(batch_time * (len(data_loader) - i - 1)))
             exp_finished_time = epoch_finished_time + datetime.timedelta(
-                seconds=round((cfg['num_epochs']['global']- epoch) * batch_time * len(data_loader)))
+                seconds=round((cfg['num_epochs']['global'] - epoch) * batch_time * len(data_loader)))
             info = {'info': ['Model: {}'.format(cfg['model_tag']),
                              'Train Epoch: {}({:.0f}%)'.format(epoch, 100. * i / len(data_loader)),
                              'Learning rate: {}'.format(lr), 'Epoch Finished Time: {}'.format(epoch_finished_time),

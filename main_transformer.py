@@ -1,26 +1,23 @@
 import argparse
-import copy
 import datetime
-import random
 import os
-import numpy as np
-import ray
-
-import models
-
+import random
 import shutil
 import time
+
+import numpy as np
+import ray
 import torch
 import torch.backends.cudnn as cudnn
 
-
+import models
 from config import cfg
-from data import fetch_dataset, make_data_loader, split_dataset, BatchDataset
+from data import fetch_dataset, split_dataset, BatchDataset
+from logger import Logger
 from metrics import Metric
 from transformer_client import TransformerClient
-from transformer_server import TransformerServer, TransformerServerSerial
-from utils import save, to_device, process_control, process_dataset, make_optimizer, make_scheduler, collate
-from logger import Logger
+from transformer_server import TransformerServer
+from utils import save, to_device, process_control, process_dataset, make_optimizer, make_scheduler
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -52,6 +49,7 @@ cfg['pivot'] = float('inf')
 cfg['metric_name'] = {'train': {'Local': ['Local-Loss', 'Local-Perplexity']},
                       'test': {'Global': ['Global-Loss', 'Global-Perplexity']}}
 ray.init()
+
 
 def main():
     process_control()
@@ -108,7 +106,7 @@ def run_experiment():
         num_active_users = len(local)
         start_time = time.time()
         dt = ray.get([client.step.remote(m, num_active_users, start_time)
-                 for m, client in enumerate(local)])
+                      for m, client in enumerate(local)])
 
         local_parameters = [v for _k, v in enumerate(dt)]
 

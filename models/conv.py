@@ -2,9 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from config import cfg
-from .utils import init_param
 from modules import Scaler
+from .utils import init_param
 
 
 class Conv(nn.Module):

@@ -1,14 +1,16 @@
-import copy
 import time
 import datetime
-import torch
+import time
+
 import ray
+import torch
 
 import models
-from data import SplitDataset, make_data_loader, BatchDataset
+from data import SplitDataset, BatchDataset
 from logger import Logger
 from metrics import Metric
-from utils import make_optimizer, collate, to_device
+from utils import make_optimizer, to_device
+
 
 @ray.remote(num_gpus=0.25)
 class TransformerClient:
@@ -88,4 +90,3 @@ class TransformerClient:
                              'Experiment Finished Time: {}'.format(exp_finished_time)]}
             self.logger.append(info, 'train', mean=False)
             self.logger.write('train', cfg['metric_name']['train']['Local'])
-

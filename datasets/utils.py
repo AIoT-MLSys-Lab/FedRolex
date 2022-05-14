@@ -1,14 +1,16 @@
-import anytree
-import hashlib
-import os
 import glob
 import gzip
+import hashlib
+import os
 import tarfile
 import zipfile
+from collections import Counter
+
+import anytree
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-from collections import Counter
+
 from utils import makedir_exist_ok
 from .transforms import *
 

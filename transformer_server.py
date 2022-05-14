@@ -1,12 +1,9 @@
 import copy
-import os
 from collections import OrderedDict
 
 import numpy as np
 import ray
 import torch
-
-from data import SplitDataset
 
 
 class TransformerServer:

@@ -1,10 +1,11 @@
-import torch
-import datasets
 import numpy as np
-from config import cfg
-from torchvision import transforms
+import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate
+from torchvision import transforms
+
+import datasets
+from config import cfg
 
 
 def fetch_dataset(data_name, subset):

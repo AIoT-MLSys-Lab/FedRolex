@@ -1,11 +1,13 @@
 import collections.abc as container_abcs
 import errno
-import numpy as np
 import os
+from itertools import repeat
+
+import numpy as np
 import torch
 import torch.optim as optim
-from itertools import repeat
 from torchvision.utils import save_image
+
 from config import cfg
 
 
