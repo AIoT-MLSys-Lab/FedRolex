@@ -31,8 +31,8 @@ parser = argparse.ArgumentParser(description='cfg')
 for k in cfg:
     exec('parser.add_argument(\'--{0}\', default=cfg[\'{0}\'], type=type(cfg[\'{0}\']))'.format(k))
 parser.add_argument('--control_name', default=None, type=str)
-parser.add_argument('--seed', default=None, type=str)
-parser.add_argument('--devices', default=None, type=str)
+parser.add_argument('--seed', default=None, type=int)
+parser.add_argument('--devices', default=None, nargs='+', type=int)
 parser.add_argument('--algo', default='roll', type=str)
 # parser.add_argument('--lr', default=None, type=int)
 parser.add_argument('--g_epochs', default=None, type=int)
@@ -50,7 +50,8 @@ elif args['algo'] == 'orig':
 
 args = vars(parser.parse_args())
 cfg['init_seed'] = int(args['seed'])
-os.environ['CUDA_VISIBLE_DEVICES'] = args['devices']
+if args['devices'] is not None:
+    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join([str(i) for i in args['devices']])
 
 for k in cfg:
     cfg[k] = args[k]
@@ -67,6 +68,11 @@ ray.init()
 
 def main():
     process_control()
+    if args['schedule'] is not None:
+        cfg['milestones'] = args['schedule']
+
+    if args['g_epochs'] is not None and args['l_epochs'] is not None:
+        cfg['num_epochs'] = {'global': args['g_epochs'], 'local': args['l_epochs']}
     cfg['init_seed'] = int(args['seed'])
     seeds = list(range(cfg['init_seed'], cfg['init_seed'] + cfg['num_experiments']))
     for i in range(cfg['num_experiments']):
