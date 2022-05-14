@@ -6,7 +6,7 @@ import ray
 import torch
 
 
-class ResnetServer:
+class ResnetServerRoll:
     def __init__(self, global_model, rate, dataset_ref, cfg_id):
         self.tau = 1e-2
         self.v_t = None
@@ -237,3 +237,109 @@ class ResnetServer:
         self.global_parameters = updated_parameters
         self.global_model.load_state_dict(self.global_parameters)
         return
+
+
+class ResnetServerRandom(ResnetServerRoll):
+    def split_model(self, user_idx):
+        cfg = self.cfg
+        idx_i = [None for _ in range(len(user_idx))]
+        idx = [OrderedDict() for _ in range(len(user_idx))]
+        for k, v in self.global_parameters.items():
+            parameter_type = k.split('.')[-1]
+            for m in range(len(user_idx)):
+                if 'weight' in parameter_type or 'bias' in parameter_type:
+                    if parameter_type == 'weight':
+                        if v.dim() > 1:
+                            input_size = v.size(1)
+                            output_size = v.size(0)
+                            if 'conv1' in k or 'conv2' in k:
+                                if idx_i[m] is None:
+                                    idx_i[m] = torch.arange(input_size, device=v.device)
+                                input_idx_i_m = idx_i[m]
+                                scaler_rate = self.model_rate[user_idx[m]] / cfg['global_model_rate']
+                                local_output_size = int(np.ceil(output_size * scaler_rate))
+                                # model_idx = self.model_idxs[k][m % self.num_model_partitions]
+                                # output_idx_i_m = model_idx[:local_output_size]
+                                roll = self.rounds % output_size
+                                # model_idx = self.model_idxs[k][self.rounds % self.num_model_partitions]
+                                model_idx = torch.randperm(output_size, device=v.device)
+                                # model_idx = torch.roll(model_idx, roll, -1)
+                                output_idx_i_m = model_idx[:local_output_size]
+                                idx_i[m] = output_idx_i_m
+                            elif 'shortcut' in k:
+                                input_idx_i_m = idx[m][k.replace('shortcut', 'conv1')][1]
+                                output_idx_i_m = idx_i[m]
+                            elif 'linear' in k:
+                                input_idx_i_m = idx_i[m]
+                                output_idx_i_m = torch.arange(output_size, device=v.device)
+                            else:
+                                raise ValueError('Not valid k')
+                            idx[m][k] = (output_idx_i_m, input_idx_i_m)
+                        else:
+                            input_idx_i_m = idx_i[m]
+                            idx[m][k] = input_idx_i_m
+                    else:
+                        input_size = v.size(0)
+                        if 'linear' in k:
+                            input_idx_i_m = torch.arange(input_size, device=v.device)
+                            idx[m][k] = input_idx_i_m
+                        else:
+                            input_idx_i_m = idx_i[m]
+                            idx[m][k] = input_idx_i_m
+                else:
+                    pass
+
+        return idx
+
+
+class ResnetServerOrig(ResnetServerRoll):
+    def split_model(self, user_idx):
+        cfg = self.cfg
+        idx_i = [None for _ in range(len(user_idx))]
+        idx = [OrderedDict() for _ in range(len(user_idx))]
+        for k, v in self.global_parameters.items():
+            parameter_type = k.split('.')[-1]
+            for m in range(len(user_idx)):
+                if 'weight' in parameter_type or 'bias' in parameter_type:
+                    if parameter_type == 'weight':
+                        if v.dim() > 1:
+                            input_size = v.size(1)
+                            output_size = v.size(0)
+                            if 'conv1' in k or 'conv2' in k:
+                                if idx_i[m] is None:
+                                    idx_i[m] = torch.arange(input_size, device=v.device)
+                                input_idx_i_m = idx_i[m]
+                                scaler_rate = self.model_rate[user_idx[m]] / cfg['global_model_rate']
+                                local_output_size = int(np.ceil(output_size * scaler_rate))
+                                # model_idx = self.model_idxs[k][m % self.num_model_partitions]
+                                # output_idx_i_m = model_idx[:local_output_size]
+                                roll = self.rounds % output_size
+                                # model_idx = self.model_idxs[k][self.rounds % self.num_model_partitions]
+                                model_idx = torch.arange(output_size, device=v.device)
+                                # model_idx = torch.roll(model_idx, roll, -1)
+                                output_idx_i_m = model_idx[:local_output_size]
+                                idx_i[m] = output_idx_i_m
+                            elif 'shortcut' in k:
+                                input_idx_i_m = idx[m][k.replace('shortcut', 'conv1')][1]
+                                output_idx_i_m = idx_i[m]
+                            elif 'linear' in k:
+                                input_idx_i_m = idx_i[m]
+                                output_idx_i_m = torch.arange(output_size, device=v.device)
+                            else:
+                                raise ValueError('Not valid k')
+                            idx[m][k] = (output_idx_i_m, input_idx_i_m)
+                        else:
+                            input_idx_i_m = idx_i[m]
+                            idx[m][k] = input_idx_i_m
+                    else:
+                        input_size = v.size(0)
+                        if 'linear' in k:
+                            input_idx_i_m = torch.arange(input_size, device=v.device)
+                            idx[m][k] = input_idx_i_m
+                        else:
+                            input_idx_i_m = idx_i[m]
+                            idx[m][k] = input_idx_i_m
+                else:
+                    pass
+
+        return idx

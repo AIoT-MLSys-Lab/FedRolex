@@ -5,6 +5,7 @@ import os
 import random
 import shutil
 import time
+from typing import List
 
 import numpy as np
 import ray
@@ -17,7 +18,6 @@ from data import fetch_dataset, make_data_loader, split_dataset
 from logger import Logger
 from metrics import Metric
 from resnet_client import ResnetClient
-from resnet_server import ResnetServer
 from utils import save, to_device, process_control, process_dataset, make_optimizer, make_scheduler, collate
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -32,12 +32,22 @@ parser = argparse.ArgumentParser(description='cfg')
 for k in cfg:
     exec('parser.add_argument(\'--{0}\', default=cfg[\'{0}\'], type=type(cfg[\'{0}\']))'.format(k))
 parser.add_argument('--control_name', default=None, type=str)
-parser.add_argument('--seed', default=None, type=str)
-parser.add_argument('--devices', default=None, type=str)
-
+parser.add_argument('--seed', default=None, type=int)
+parser.add_argument('--devices', default=None, nargs='+', type=int)
+parser.add_argument('--algo', default='roll', type=str)
+# parser.add_argument('--lr', default=None, type=int)
+parser.add_argument('--g_epochs', default=None, type=int)
+parser.add_argument('--l_epochs', default=None, type=int)
+parser.add_argument('--schedule', default=None, nargs='+', type=int)
+# parser.add_argument('--exp_name', default=None, type=str)
 args = vars(parser.parse_args())
 cfg['init_seed'] = int(args['seed'])
-os.environ['CUDA_VISIBLE_DEVICES'] = args['devices']
+if args['algo'] == 'roll':
+    from resnet_server import ResnetServerRoll as Server
+elif args['algo'] == 'random':
+    from resnet_server import ResnetServerRandom as Server
+elif args['algo'] == 'orig':
+    from resnet_server import ResnetServerOrig as Server
 
 for k in cfg:
     cfg[k] = args[k]
@@ -55,6 +65,12 @@ ray.init()
 
 def main():
     process_control()
+
+    if args['schedule'] is not None:
+        cfg['milestones'] = args['schedule']
+
+    if args['g_epochs'] is not None and args['l_epochs'] is not None:
+        cfg['num_epochs'] = {'global': args['g_epochs'], 'local': args['l_epochs']}
     cfg['init_seed'] = int(args['seed'])
     seeds = list(range(cfg['init_seed'], cfg['init_seed'] + cfg['num_experiments']))
     for i in range(cfg['num_experiments']):
@@ -92,7 +108,7 @@ def run_experiment():
         'split': ray.put(data_split['train']),
         'label_split': ray.put(label_split)}
 
-    server = ResnetServer(global_model, cfg['model_rate'], dataset_ref, cfg_id)
+    server = Server(global_model, cfg['model_rate'], dataset_ref, cfg_id)
     local = [ResnetClient.remote(logger.log_path, [cfg_id]) for _ in range(num_active_users)]
     for epoch in range(last_epoch, cfg['num_epochs']['global'] + 1):
         t0 = time.time()

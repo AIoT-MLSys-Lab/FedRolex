@@ -71,7 +71,7 @@ def split_dataset(dataset, num_users, data_split_mode):
 def iid(dataset, num_users):
     if cfg['data_name'] in ['MNIST', 'CIFAR10', 'CIFAR100']:
         label = torch.tensor(dataset.target)
-    elif cfg['data_name'] in ['WikiText2']:
+    elif cfg['data_name'] in ['WikiText2', 'WikiText103', 'PennTreebank']:
         label = dataset.token
     else:
         raise ValueError('Not valid data name')

@@ -1,4 +1,4 @@
-import time
+import copy
 import datetime
 import time
 
@@ -39,7 +39,7 @@ class TransformerClient:
         local_parameters = ray.get(model_ref['local_params'])
         dataset = SplitDataset(dataset, data_split[client_id])
         self.dataset = BatchDataset(dataset, self.cfg['bptt'])
-        self.local_parameters = local_parameters
+        self.local_parameters = copy.deepcopy(local_parameters)
         self.client_id = client_id
         self.model_rate = model_ref['model_rate']
         self.label_split = label_split
@@ -60,12 +60,11 @@ class TransformerClient:
                 input_size = step_input['label'].size(0)
                 step_input['label_split'] = torch.tensor(self.label_split[self.client_id])
                 step_input = to_device(step_input, cfg['device'])
-                self.model.zero_grad()
+                self.optimizer.zero_grad()
                 output = self.model(step_input)
                 output['loss'].backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
                 self.optimizer.step()
-                # print(step_input['label'].shape, output['score'].shape)
                 evaluation = self.metric.evaluate(cfg['metric_name']['train']['Local'], step_input, output)
                 self.logger.append(evaluation, 'train', n=input_size)
             self.log(local_epoch, cfg)

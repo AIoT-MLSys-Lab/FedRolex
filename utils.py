@@ -102,7 +102,7 @@ def recur(fn, input, *args):
 def process_dataset(dataset):
     if cfg['data_name'] in ['MNIST', 'CIFAR10', 'CIFAR100']:
         cfg['classes_size'] = dataset['train'].classes_size
-    elif cfg['data_name'] in ['WikiText2']:
+    elif cfg['data_name'] in ['WikiText2', 'WikiText103', 'PennTreebank']:
         cfg['vocab'] = dataset['train'].vocab
         cfg['num_tokens'] = len(dataset['train'].vocab)
         for split in dataset:
@@ -152,65 +152,65 @@ def process_control():
     if cfg['data_name'] in ['MNIST']:
         cfg['data_shape'] = [1, 28, 28]
         cfg['optimizer_name'] = 'SGD'
-        cfg['lr'] = 1e-2
+        # cfg['lr'] = 1e-2
         cfg['momentum'] = 0.9
         cfg['weight_decay'] = 5e-4
         cfg['scheduler_name'] = 'MultiStepLR'
         cfg['factor'] = 0.1
         if cfg['data_split_mode'] == 'iid':
-            cfg['num_epochs'] = {'global': 200, 'local': 5}
+            # cfg['num_epochs'] = {'global': 200, 'local': 5}
             cfg['batch_size'] = {'train': 24, 'test': 50}
-            cfg['milestones'] = [100]
+            # cfg['milestones'] = [100]
         elif 'non-iid' in cfg['data_split_mode']:
-            cfg['num_epochs'] = {'global': 400, 'local': 5}
+            # cfg['num_epochs'] = {'global': 400, 'local': 5}
             cfg['batch_size'] = {'train': 10, 'test': 50}
             cfg['milestones'] = [200]
         elif cfg['data_split_mode'] == 'none':
             cfg['num_epochs'] = 200
             cfg['batch_size'] = {'train': 100, 'test': 500}
-            cfg['milestones'] = [100]
+            # cfg['milestones'] = [100]
         else:
             raise ValueError('Not valid data_split_mode')
     elif cfg['data_name'] in ['CIFAR10', 'CIFAR100']:
         cfg['data_shape'] = [3, 32, 32]
-        cfg['optimizer_name'] = 'Adam'
-        cfg['lr'] = 1e-2
+        cfg['optimizer_name'] = 'SGD'
+        # cfg['lr'] = 1e-4
         cfg['momentum'] = 0.9
         cfg['min_lr'] = 1e-4
         cfg['weight_decay'] = 1e-3
         cfg['scheduler_name'] = 'MultiStepLR'
         cfg['factor'] = 0.25
         if cfg['data_split_mode'] == 'iid':
-            cfg['num_epochs'] = {'global': 2500, 'local': 1}
+            # cfg['num_epochs'] = {'global': 2500, 'local': 1}
             cfg['batch_size'] = {'train': 10, 'test': 50}
-            cfg['milestones'] = [1000, 1500, 2000]
+            # cfg['milestones'] = [1000, 1500, 2000]
         elif 'non-iid' in cfg['data_split_mode']:
-            cfg['num_epochs'] = {'global': 2500, 'local': 1}
+            # cfg['num_epochs'] = {'global': 2500, 'local': 1}
             cfg['batch_size'] = {'train': 10, 'test': 50}
-            cfg['milestones'] = [1000, 1500, 2000]
+            # cfg['milestones'] = [1000, 1500, 2000]
         elif cfg['data_split_mode'] == 'none':
             cfg['num_epochs'] = 400
             cfg['batch_size'] = {'train': 100, 'test': 500}
-            cfg['milestones'] = [150, 250]
+            # cfg['milestones'] = [150, 250]
         else:
             raise ValueError('Not valid data_split_mode')
     elif cfg['data_name'] in ['PennTreebank', 'WikiText2', 'WikiText103']:
         cfg['optimizer_name'] = 'SGD'
-        cfg['lr'] = 1e-3
+        # cfg['lr'] = 1e-2
         cfg['momentum'] = 0.9
         cfg['weight_decay'] = 5e-4
         cfg['scheduler_name'] = 'MultiStepLR'
-        cfg['factor'] = 0.5
+        cfg['factor'] = 0.1
         cfg['bptt'] = 64
         cfg['mask_rate'] = 0.15
         if cfg['data_split_mode'] == 'iid':
-            cfg['num_epochs'] = {'global': 300, 'local': 1}
+            # cfg['num_epochs'] = {'global': 200, 'local': 3}
             cfg['batch_size'] = {'train': 100, 'test': 10}
-            cfg['milestones'] = [10, 30, 150]
+            cfg['milestones'] = [50, 100]
         elif cfg['data_split_mode'] == 'none':
             cfg['num_epochs'] = 100
             cfg['batch_size'] = {'train': 100, 'test': 100}
-            cfg['milestones'] = [25, 50]
+            # cfg['milestones'] = [25, 50]
         else:
             raise ValueError('Not valid data_split_mode')
     else:

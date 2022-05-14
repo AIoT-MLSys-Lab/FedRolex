@@ -16,7 +16,7 @@ from data import fetch_dataset, split_dataset, BatchDataset
 from logger import Logger
 from metrics import Metric
 from transformer_client import TransformerClient
-from transformer_server import TransformerServer
+from transformer_server import TransformerServerRoll
 from utils import save, to_device, process_control, process_dataset, make_optimizer, make_scheduler
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -33,6 +33,20 @@ for k in cfg:
 parser.add_argument('--control_name', default=None, type=str)
 parser.add_argument('--seed', default=None, type=str)
 parser.add_argument('--devices', default=None, type=str)
+parser.add_argument('--algo', default='roll', type=str)
+# parser.add_argument('--lr', default=None, type=int)
+parser.add_argument('--g_epochs', default=None, type=int)
+parser.add_argument('--l_epochs', default=None, type=int)
+parser.add_argument('--schedule', default=None, nargs='+', type=int)
+# parser.add_argument('--exp_name', default=None, type=str)
+args = vars(parser.parse_args())
+cfg['init_seed'] = int(args['seed'])
+if args['algo'] == 'roll':
+    from transformer_server import TransformerServerRoll as Server
+elif args['algo'] == 'random':
+    from transformer_server import TransformerServerRandom as Server
+elif args['algo'] == 'orig':
+    from transformer_server import TransformerServerOrig as Server
 
 args = vars(parser.parse_args())
 cfg['init_seed'] = int(args['seed'])
@@ -91,7 +105,7 @@ def run_experiment():
         'split': ray.put(data_split['train']),
         'label_split': ray.put(label_split)}
 
-    server = TransformerServer(global_model, cfg['model_rate'], dataset_ref, cfg_id)
+    server = Server(global_model, cfg['model_rate'], dataset_ref, cfg_id)
     local = [TransformerClient.remote(logger.log_path, [cfg_id]) for _ in range(num_active_users)]
     # local = [TransformerClient(logger.log_path, [cfg_id]) for _ in range(num_active_users)]
 
