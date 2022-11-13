@@ -201,6 +201,21 @@ class WikiText103(LanguageModeling):
         return train_token, valid_token, test_token, vocab
 
 
+class StackOverflowClientDataset(Dataset):
+    def __init__(self, token, seq_length, batch_size):
+        self.seq_length = seq_length
+        self.token = token
+        num_batch = len(token) // (batch_size * seq_length)
+        self.token = self.token.narrow(0, 0, num_batch * batch_size * seq_length)
+        self.token = self.token.reshape(-1, batch_size, seq_length)
+
+    def __getitem__(self, index):
+        return {'label': self.token[index, :, :].reshape(-1, self.seq_length)}
+
+    def __len__(self):
+        return len(self.token)
+
+
 def read_token(vocab, token_path):
     with open(token_path, 'r', encoding='utf-8') as f:
         for line in f:

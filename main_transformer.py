@@ -42,7 +42,8 @@ parser.add_argument('--schedule', default=None, nargs='+', type=int)
 args = vars(parser.parse_args())
 cfg['init_seed'] = int(args['seed'])
 if args['algo'] == 'roll':
-    from transformer_server import TransformerServerRoll as Server
+    # from transformer_server import TransformerServerRoll as Server
+    from transformer_server import TransformerServerRollSerial as Server
 elif args['algo'] == 'random':
     from transformer_server import TransformerServerRandom as Server
 elif args['algo'] == 'orig':
@@ -112,8 +113,8 @@ def run_experiment():
         'label_split': ray.put(label_split)}
 
     server = Server(global_model, cfg['model_rate'], dataset_ref, cfg_id)
-    local = [TransformerClient.remote(logger.log_path, [cfg_id]) for _ in range(num_active_users)]
-    # local = [TransformerClient(logger.log_path, [cfg_id]) for _ in range(num_active_users)]
+    # local = [TransformerClient.remote(logger.log_path, [cfg_id]) for _ in range(num_active_users)]
+    local = [TransformerClient(logger.log_path, [cfg_id]) for _ in range(num_active_users)]
 
     for epoch in range(last_epoch, cfg['num_epochs']['global'] + 1):
         t0 = time.time()
@@ -125,15 +126,15 @@ def run_experiment():
 
         num_active_users = len(local)
         start_time = time.time()
-        dt = ray.get([client.step.remote(m, num_active_users, start_time)
-                      for m, client in enumerate(local)])
+        # dt = ray.get([client.step.remote(m, num_active_users, start_time)
+        #               for m, client in enumerate(local)])
+        #
+        # local_parameters = [v for _k, v in enumerate(dt)]
 
-        local_parameters = [v for _k, v in enumerate(dt)]
-
-        # local_parameters = [None for _ in range(num_active_users)]
-        # for m in range(num_active_users):
-        #     local[m].step(m, num_active_users, start_time)
-        #     local_parameters[m] = local[m].pull()
+        local_parameters = [None for _ in range(num_active_users)]
+        for m in range(num_active_users):
+            local[m].step(m, num_active_users, start_time)
+            local_parameters[m] = local[m].pull()
         t2 = time.time()
         server.step(local_parameters)
         t3 = time.time()
@@ -142,7 +143,7 @@ def run_experiment():
         test_model = global_model
         t4 = time.time()
 
-        test(dataset['test'], test_model, logger, epoch)
+        ev = test(dataset['test'], test_model, logger, epoch)
         t5 = time.time()
         logger.safe(False)
         model_state_dict = global_model.state_dict()
@@ -185,7 +186,7 @@ def test(dataset, model, logger, epoch):
                          'Test Epoch: {}({:.0f}%)'.format(epoch, 100.)]}
         logger.append(info, 'test', mean=False)
         logger.write('test', cfg['metric_name']['test']['Global'])
-    return
+    return evaluation
 
 
 if __name__ == "__main__":

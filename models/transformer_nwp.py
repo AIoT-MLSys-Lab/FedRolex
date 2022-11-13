@@ -148,20 +148,22 @@ class Transformer(nn.Module):
     def forward(self, input):
         cfg = self.cfg
         output = {}
-        src = input['label'].clone()
+        src = input['label'][:, :-1].clone()
+        input['label'] = input['label'][:, 1:]
         N, S = src.size()
-        d = torch.distributions.bernoulli.Bernoulli(probs=cfg['mask_rate'])
-        mask = d.sample((N, S)).to(src.device)
-        src = src.masked_fill(mask == 1, self.num_tokens).detach()
+        # d = torch.distributions.bernoulli.Bernoulli(probs=cfg['mask_rate'])
+        #
+        # mask = d.sample((N, S)).to(src.device)
+        # src = src.masked_fill(mask == 1, self.num_tokens).detach()
         src = self.transformer_embedding(src)
         src = self.transformer_encoder(src)
         out = self.decoder(src)
         out = out.permute(0, 2, 1)
-        if 'label_split' in input and cfg['mask']:
-            label_mask = torch.zeros((cfg['num_tokens'], 1), device=out.device)
-            label_mask[input['label_split']] = 1
-            out = out.masked_fill(label_mask == 0, 0)
         output['score'] = out
+        # C = np.ones((10000,))
+        # C[:2] = 0
+        # C = C / 9998.0
+        # C = torch.tensor(C, dtype=torch.float).cuda()
         output['loss'] = F.cross_entropy(output['score'], input['label'])
         return output
 
