@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -6,6 +8,7 @@ from torchvision import transforms
 
 import datasets
 from config import cfg
+from datasets.gld import GLD160
 
 
 def fetch_dataset(data_name, subset):
@@ -38,6 +41,18 @@ def fetch_dataset(data_name, subset):
     elif data_name in ['PennTreebank', 'WikiText2', 'WikiText103']:
         dataset['train'] = eval('datasets.{}(root=root, split=\'train\')'.format(data_name))
         dataset['test'] = eval('datasets.{}(root=root, split=\'test\')'.format(data_name))
+    elif data_name in ['Stackoverflow']:
+        dataset['train'] = torch.load(os.path.join('/egr/research-zhanglambda/samiul/stackoverflow/',
+                                                   'stackoverflow_{}.pt'.format('train')))
+        dataset['test'] = torch.load(os.path.join('/egr/research-zhanglambda/samiul/stackoverflow/',
+                                                  'stackoverflow_{}.pt'.format('val')))
+        dataset['vocab'] = torch.load(os.path.join('/egr/research-zhanglambda/samiul/stackoverflow/',
+                                                   'meta.pt'))
+    elif data_name in ['gld']:
+        dataset['train'] = torch.load(os.path.join('gld_160k/',
+                                                   '{}.pt'.format('train')))
+        dataset['test'] = torch.load(os.path.join('gld_160k/',
+                                                  '{}.pt'.format('test')))
     else:
         raise ValueError('Not valid dataset name')
     print('data ready')
@@ -57,12 +72,18 @@ def input_collate(batch):
 
 def split_dataset(dataset, num_users, data_split_mode):
     data_split = {}
+    if cfg['data_name'] in ['gld']:
+        data_split['train'] = [GLD160(usr_data, usr_labels) for usr_data, usr_labels, _ in dataset['train'].values()]
+        data_split['test'] = GLD160(*dataset['test'])
+        label_split = [list(usr_lbl_split.keys()) for _, _, usr_lbl_split in dataset['train'].values()]
+        return data_split, label_split
     if data_split_mode == 'iid':
         data_split['train'], label_split = iid(dataset['train'], num_users)
         data_split['test'], _ = iid(dataset['test'], num_users)
     elif 'non-iid' in cfg['data_split_mode']:
         data_split['train'], label_split = non_iid(dataset['train'], num_users)
         data_split['test'], _ = non_iid(dataset['test'], num_users, label_split)
+
     else:
         raise ValueError('Not valid data split mode')
     return data_split, label_split
@@ -140,6 +161,19 @@ class SplitDataset(Dataset):
 
     def __getitem__(self, index):
         return self.dataset[self.idx[index]]
+
+
+class GenericDataset(Dataset):
+    def __init__(self, dataset):
+        super().__init__()
+        self.dataset = dataset
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        input = self.dataset[index]
+        return input
 
 
 class BatchDataset(Dataset):

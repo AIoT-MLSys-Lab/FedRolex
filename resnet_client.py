@@ -8,10 +8,11 @@ import models
 from data import SplitDataset, make_data_loader
 from logger import Logger
 from metrics import Metric
+from models import resnet
 from utils import make_optimizer, collate, to_device
 
 
-@ray.remote(num_gpus=0.2)
+@ray.remote(num_gpus=0.15)
 class ResnetClient:
     def __init__(self, log_path, cfg):
         # with open('config.yml', 'r') as f:
@@ -52,7 +53,7 @@ class ResnetClient:
 
     def step(self, m, num_active_users, start_time):
         cfg = self.cfg
-        self.model = models.resnet18(model_rate=self.model_rate, cfg=self.cfg).to('cuda')
+        self.model = resnet.resnet18(model_rate=self.model_rate, cfg=self.cfg).to('cuda')
         self.model.load_state_dict(self.local_parameters)
         self.model.train(True)
         self.optimizer = make_optimizer(self.model, self.lr)
@@ -76,7 +77,7 @@ class ResnetClient:
         return self.pull()
 
     def pull(self):
-        model_state = {k: v.detach().clone() for k, v in self.model.to(self.cfg['device']).state_dict().items()}
+        model_state = {k: v.detach().clone().cpu() for k, v in self.model.to(self.cfg['device']).state_dict().items()}
         return model_state
 
     def log(self, epoch, cfg):

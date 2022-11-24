@@ -17,6 +17,7 @@ from config import cfg
 from data import fetch_dataset, make_data_loader, split_dataset
 from logger import Logger
 from metrics import Metric
+from models import resnet
 from resnet_client import ResnetClient
 from utils import save, to_device, process_control, process_dataset, make_optimizer, make_scheduler, collate
 
@@ -35,12 +36,18 @@ parser.add_argument('--control_name', default=None, type=str)
 parser.add_argument('--seed', default=None, type=int)
 parser.add_argument('--devices', default=None, nargs='+', type=int)
 parser.add_argument('--algo', default='roll', type=str)
+parser.add_argument('--weighting', default='avg', type=str)
 # parser.add_argument('--lr', default=None, type=int)
 parser.add_argument('--g_epochs', default=None, type=int)
 parser.add_argument('--l_epochs', default=None, type=int)
+parser.add_argument('--overlap', default=None, type=float)
+
 parser.add_argument('--schedule', default=None, nargs='+', type=int)
 # parser.add_argument('--exp_name', default=None, type=str)
 args = vars(parser.parse_args())
+
+cfg['overlap'] = args['overlap']
+cfg['weighting'] = args['weighting']
 cfg['init_seed'] = int(args['seed'])
 if args['algo'] == 'roll':
     from resnet_server import ResnetServerRoll as Server
@@ -48,7 +55,8 @@ elif args['algo'] == 'random':
     from resnet_server import ResnetServerRandom as Server
 elif args['algo'] == 'orig':
     from resnet_server import ResnetServerOrig as Server
-
+if args['devices'] is not None:
+    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join([str(i) for i in args['devices']])
 for k in cfg:
     cfg[k] = args[k]
 if args['control_name']:
@@ -61,6 +69,7 @@ cfg['metric_name'] = {'train': {'Local': ['Local-Loss', 'Local-Accuracy']},
                       'test': {'Local': ['Local-Loss', 'Local-Accuracy'], 'Global': ['Global-Loss', 'Global-Accuracy']}}
 
 ray.init()
+rates = None
 
 
 def main():
@@ -93,7 +102,7 @@ def run_experiment():
     os.environ['PYTHONHASHSEED'] = str(seed)
     dataset = fetch_dataset(cfg['data_name'], cfg['subset'])
     process_dataset(dataset)
-    global_model = models.resnet18(model_rate=cfg["global_model_rate"], cfg=cfg).to(cfg['device'])
+    global_model = resnet.resnet18(model_rate=cfg["global_model_rate"], cfg=cfg).to(cfg['device'])
     optimizer = make_optimizer(global_model, cfg['lr'])
     scheduler = make_scheduler(optimizer)
     last_epoch = 1
@@ -101,8 +110,9 @@ def run_experiment():
     logger_path = os.path.join('output', 'runs', 'train_{}'.format(f'{cfg["model_tag"]}_{cfg["exp_name"]}'))
     logger = Logger(logger_path)
 
-    cfg_id = ray.put(cfg)
     num_active_users = int(np.ceil(cfg['frac'] * cfg['num_users']))
+    cfg['active_user'] = num_active_users
+    cfg_id = ray.put(cfg)
     dataset_ref = {
         'dataset': ray.put(dataset['train']),
         'split': ray.put(data_split['train']),
@@ -110,12 +120,13 @@ def run_experiment():
 
     server = Server(global_model, cfg['model_rate'], dataset_ref, cfg_id)
     local = [ResnetClient.remote(logger.log_path, [cfg_id]) for _ in range(num_active_users)]
+    rates = server.model_rate
     for epoch in range(last_epoch, cfg['num_epochs']['global'] + 1):
         t0 = time.time()
         logger.safe(True)
         scheduler.step()
         lr = optimizer.param_groups[0]['lr']
-        local = server.broadcast(local, lr)
+        local, param_idx, user_idx = server.broadcast(local, lr)
         t1 = time.time()
 
         num_active_users = len(local)
@@ -138,7 +149,7 @@ def run_experiment():
         #     local[m].step(m, num_active_users, start_time)
         #     local_parameters[m] = local[m].pull()
         t2 = time.time()
-        server.step(local_parameters)
+        server.step(local_parameters, param_idx, user_idx)
         t3 = time.time()
 
         global_model = server.global_model
@@ -179,17 +190,19 @@ def test(dataset, data_split, label_split, model, logger, epoch, local):
         data_split_id = ray.put(data_split)
         model_id = ray.put(copy.deepcopy(model))
         label_split_id = ray.put(label_split)
-        # torch.save([dataset, data_split, model, label_split], 'test_data')
-        for m in range(0, cfg['num_users'], 10):
+        all_res = []
+        for m in range(0, cfg['num_users'], len(local)):
             processes = []
-            for k in range(m, min(m + 10, cfg['num_users'])):
-                processes.append(local[k % 10]
+            for k in range(m, min(m + len(local), cfg['num_users'])):
+                processes.append(local[k % len(local)]
                                  .test_model_for_user.remote(m,
                                                              [dataset_id, data_split_id, model_id, label_split_id]))
             results = ray.get(processes)
             for result in results:
+                all_res.append(result)
                 evaluation, input_size = result[0]
                 logger.append(evaluation, 'test', input_size)
+        # torch.save((all_res, rates), f'./output/runs/{cfg["model_tag"]}_real_world.pt')
         data_loader = make_data_loader({'test': dataset})['test']
         metric = Metric()
         model.cuda()

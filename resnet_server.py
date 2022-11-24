@@ -19,32 +19,39 @@ class ResnetServerRoll:
         self.dataset_ref = dataset_ref
         self.cfg_id = cfg_id
         self.cfg = ray.get(cfg_id)
-        self.global_model = global_model
+        self.global_model = global_model.cpu()
         self.global_parameters = global_model.state_dict()
         self.rate = rate
         self.label_split = ray.get(dataset_ref['label_split'])
         self.make_model_rate()
         self.num_model_partitions = 50
         self.model_idxs = {}
+        self.roll_idx = {}
         self.rounds = 0
         self.tmp_counts = {}
         for k, v in self.global_parameters.items():
             self.tmp_counts[k] = torch.ones_like(v)
+        self.reshuffle_params()
+        self.reshuffle_rounds = 512
 
+    def reshuffle_params(self):
         for k, v in self.global_parameters.items():
             if 'conv1' in k or 'conv2' in k:
                 output_size = v.size(0)
-                self.model_idxs[k] = [torch.randperm(output_size, device=v.device) for _ in range(
-                    self.num_model_partitions)]
+                self.model_idxs[k] = torch.randperm(output_size, device=v.device)
+                self.roll_idx[k] = 0
+        return self.model_idxs
 
-    def step(self, local_parameters):
-        self.combine(local_parameters, self.param_idx, self.user_idx)
+    def step(self, local_parameters, param_idx, user_idx):
+        self.combine(local_parameters, param_idx, user_idx)
         self.rounds += 1
+        if self.rounds % self.reshuffle_rounds:
+            self.reshuffle_params()
 
     def broadcast(self, local, lr):
         cfg = self.cfg
         self.global_model.train(True)
-        num_active_users = int(np.ceil(cfg['frac'] * cfg['num_users']))
+        num_active_users = cfg['active_user']
         self.user_idx = copy.deepcopy(torch.arange(cfg['num_users'])
                                       [torch.randperm(cfg['num_users'])
             [:num_active_users]].tolist())
@@ -60,7 +67,7 @@ class ResnetServerRoll:
                                        'model_rate': self.model_rate[self.user_idx[m]],
                                        'local_params': param_ids[m]})
                  for m, client in enumerate(local)])
-        return local
+        return local, self.param_idx, self.user_idx
 
     def make_model_rate(self):
         cfg = self.cfg
@@ -92,11 +99,15 @@ class ResnetServerRoll:
                                 input_idx_i_m = idx_i[m]
                                 scaler_rate = self.model_rate[user_idx[m]] / cfg['global_model_rate']
                                 local_output_size = int(np.ceil(output_size * scaler_rate))
-                                # model_idx = self.model_idxs[k][m % self.num_model_partitions]
-                                # output_idx_i_m = model_idx[:local_output_size]
-                                roll = self.rounds % output_size
-                                # model_idx = self.model_idxs[k][self.rounds % self.num_model_partitions]
-                                model_idx = torch.arange(output_size, device=v.device)
+                                if self.cfg['overlap'] is None:
+                                    roll = self.rounds % output_size
+                                else:
+                                    overlap = self.cfg['overlap']
+                                    self.roll_idx[k] += int(local_output_size * (1 - overlap)) + 1
+                                    self.roll_idx[k] = self.roll_idx[k] % local_output_size
+                                    roll = self.roll_idx[k]
+                                model_idx = self.model_idxs[k]
+                                # model_idx = self.model_idxs[k]
                                 model_idx = torch.roll(model_idx, roll, -1)
                                 output_idx_i_m = model_idx[:local_output_size]
                                 idx_i[m] = output_idx_i_m
@@ -146,13 +157,13 @@ class ResnetServerRoll:
 
     def combine(self, local_parameters, param_idx, user_idx):
         count = OrderedDict()
-        self.global_parameters = self.global_model.state_dict()
+        self.global_parameters = self.global_model.cpu().state_dict()
         updated_parameters = copy.deepcopy(self.global_parameters)
         tmp_counts_cpy = copy.deepcopy(self.tmp_counts)
         for k, v in updated_parameters.items():
             parameter_type = k.split('.')[-1]
-            count[k] = v.new_zeros(v.size(), dtype=torch.float32)
-            tmp_v = v.new_zeros(v.size(), dtype=torch.float32)
+            count[k] = v.new_zeros(v.size(), dtype=torch.float32, device='cpu')
+            tmp_v = v.new_zeros(v.size(), dtype=torch.float32, device='cpu')
             for m in range(len(local_parameters)):
                 if 'weight' in parameter_type or 'bias' in parameter_type:
                     if parameter_type == 'weight':
@@ -170,10 +181,17 @@ class ResnetServerRoll:
                                 output_size = v.size(0)
                                 scaler_rate = self.model_rate[user_idx[m]] / self.cfg['global_model_rate']
                                 local_output_size = int(np.ceil(output_size * scaler_rate))
+                                if self.cfg['weighting'] == 'avg':
+                                    K = 1
+                                elif self.cfg['weighting'] == 'width':
+                                    K = local_output_size
+                                elif self.cfg['weighting'] == 'updates':
+                                    K = self.tmp_counts[k][torch.meshgrid(param_idx[m][k])]
+                                elif self.cfg['weighting'] == 'updates_width':
+                                    K = local_output_size * self.tmp_counts[k][torch.meshgrid(param_idx[m][k])]
                                 # K = self.tmp_counts[k][torch.meshgrid(param_idx[m][k])]
                                 # K = local_output_size
                                 # K = local_output_size * self.tmp_counts[k][torch.meshgrid(param_idx[m][k])]
-                                K = 1
                                 tmp_v[torch.meshgrid(param_idx[m][k])] += K * local_parameters[m][k]
                                 count[k][torch.meshgrid(param_idx[m][k])] += K
                                 tmp_counts_cpy[k][torch.meshgrid(param_idx[m][k])] += 1

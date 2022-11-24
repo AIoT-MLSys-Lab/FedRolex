@@ -107,6 +107,11 @@ def process_dataset(dataset):
         cfg['num_tokens'] = len(dataset['train'].vocab)
         for split in dataset:
             dataset[split] = batchify(dataset[split], cfg['batch_size'][split])
+    elif cfg['data_name'] in ['Stackoverflow']:
+        # cfg['vocab'] = dataset['vocab']
+        cfg['num_tokens'] = len(dataset['vocab'])
+    elif cfg['data_name'] in ['gld']:
+        cfg['classes_size'] = 2028
     else:
         raise ValueError('Not valid data name')
     return
@@ -148,7 +153,11 @@ def process_control():
         raise ValueError('Not valid model split mode')
     cfg['conv'] = {'hidden_size': [64, 128, 256, 512]}
     cfg['resnet'] = {'hidden_size': [64, 128, 256, 512]}
-    cfg['transformer'] = {'embedding_size': 256, 'num_heads': 8, 'hidden_size': 512, 'num_layers': 4, 'dropout': 0.2}
+    cfg['transformer'] = {'embedding_size': 128,
+                          'num_heads': 8,
+                          'hidden_size': 2048,
+                          'num_layers': 3,
+                          'dropout': 0.1}
     if cfg['data_name'] in ['MNIST']:
         cfg['data_shape'] = [1, 28, 28]
         cfg['optimizer_name'] = 'SGD'
@@ -194,6 +203,31 @@ def process_control():
             # cfg['milestones'] = [150, 250]
         else:
             raise ValueError('Not valid data_split_mode')
+    elif cfg['data_name'] in ['gld']:
+        cfg['data_shape'] = [3, 92, 92]
+        cfg['optimizer_name'] = 'SGD'
+        # cfg['lr'] = 1e-4
+        cfg['num_users'] = 1262
+        cfg['active_user'] = 80
+        cfg['momentum'] = 0.9
+        cfg['min_lr'] = 5e-4
+        cfg['weight_decay'] = 1e-3
+        cfg['scheduler_name'] = 'MultiStepLR'
+        cfg['factor'] = 0.1
+        if cfg['data_split_mode'] == 'iid':
+            # cfg['num_epochs'] = {'global': 2500, 'local': 1}
+            cfg['batch_size'] = {'train': 32, 'test': 50}
+            # cfg['milestones'] = [1000, 1500, 2000]
+        elif 'non-iid' in cfg['data_split_mode']:
+            # cfg['num_epochs'] = {'global': 2500, 'local': 1}
+            cfg['batch_size'] = {'train': 32, 'test': 50}
+            # cfg['milestones'] = [1000, 1500, 2000]
+        elif cfg['data_split_mode'] == 'none':
+            cfg['num_epochs'] = 400
+            cfg['batch_size'] = {'train': 100, 'test': 500}
+            # cfg['milestones'] = [150, 250]
+        else:
+            raise ValueError('Not valid data_split_mode')
     elif cfg['data_name'] in ['PennTreebank', 'WikiText2', 'WikiText103']:
         cfg['optimizer_name'] = 'SGD'
         # cfg['lr'] = 1e-2
@@ -213,6 +247,19 @@ def process_control():
             # cfg['milestones'] = [25, 50]
         else:
             raise ValueError('Not valid data_split_mode')
+    elif cfg['data_name'] in ['Stackoverflow']:
+        cfg['optimizer_name'] = 'SGD'
+        cfg['num_users'] = 342477
+        cfg['active_user'] = 50
+        cfg['momentum'] = 0.9
+        cfg['weight_decay'] = 5e-4
+        cfg['scheduler_name'] = 'MultiStepLR'
+        cfg['factor'] = 0.1
+        cfg['bptt'] = 64
+        cfg['batch_size'] = {'train': 24, 'test': 24}
+        cfg['mask_rate'] = 0.15
+        cfg['num_users'] = 342477
+        cfg['seq_length'] = 21
     else:
         raise ValueError('Not valid dataset')
     return
@@ -348,6 +395,8 @@ def resume(model, model_tag, optimizer=None, scheduler=None, load_tag='checkpoin
 
 
 def collate(input):
+    if 'label' in input.keys():
+        input['label'] = [torch.tensor(i) for i in input['label']]
     for k in input:
         input[k] = torch.stack(input[k], 0)
     return input

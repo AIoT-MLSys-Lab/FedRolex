@@ -16,6 +16,7 @@ class Logger():
         self.mean = defaultdict(int)
         self.history = defaultdict(list)
         self.iterator = defaultdict(int)
+        self.hist = defaultdict(list)
 
     def safe(self, write):
         if write:
@@ -32,6 +33,7 @@ class Logger():
         self.tracker = defaultdict(int)
         self.counter = defaultdict(int)
         self.mean = defaultdict(int)
+        self.hist = defaultdict(list)
         return
 
     def append(self, result, tag, n=1, mean=True):
@@ -41,6 +43,8 @@ class Logger():
             if mean:
                 if isinstance(result[k], Number):
                     self.counter[name] += n
+                    if 'local' in name.lower():
+                        self.hist[name].append(result[k])
                     self.mean[name] = ((self.counter[name] - n) * self.mean[name] + n * result[k]) / self.counter[name]
                 elif isinstance(result[k], Iterable):
                     if name not in self.mean:
@@ -50,6 +54,8 @@ class Logger():
                     n = _ntuple(n)
                     for i in range(len(result[k])):
                         self.counter[name][i] += n[i]
+                        if 'local' in name.lower():
+                            self.hist[name].append(n[i])
                         self.mean[name][i] = ((self.counter[name][i] - n[i]) * self.mean[name][i] + n[i] *
                                               result[k][i]) / self.counter[name][i]
                 else:
@@ -73,6 +79,8 @@ class Logger():
                 if self.writer is not None:
                     self.iterator[name] += 1
                     self.writer.add_scalar(name, s[0], self.iterator[name])
+                    if 'local' in name.lower():
+                        self.writer.add_histogram(f'{name}_hist', self.hist[name], self.iterator[name])
             else:
                 raise ValueError('Not valid data type')
         info_name = '{}/info'.format(tag)
