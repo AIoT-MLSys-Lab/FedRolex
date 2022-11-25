@@ -9,7 +9,7 @@ Extraction"](https://openreview.net/forum?id=OtxyysUdBE).
 algorithms is shown here. `FedRolex` is among a group of model heterogeneous algorithms that
 use partial training to train a server model from
 a heterogeneous federation of client devices.
-![fig:overview](figures/fedrolex_overview.png =200x) `FedRolex` trains only a sub-model extracted from the 
+![fig:overview](figures/fedrolex_overview.png) `FedRolex` trains only a sub-model extracted from the 
 global server
 model and sends the corresponding sub-model updates back to the server
 for update aggregation. Here, is an illustration over three rounds of training on two
