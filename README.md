@@ -9,7 +9,8 @@ Extraction"](https://openreview.net/forum?id=OtxyysUdBE).
 algorithms is shown here. `FedRolex` is among a group of model heterogeneous algorithms that
 use partial training to train a server model from
 a heterogeneous federation of client devices.
-![fig:overview](figures/fedrolex_overview.png) `FedRolex` trains only a sub-model extracted from the global server
+![fig:overview](figures/fedrolex_overview.png =200x) `FedRolex` trains only a sub-model extracted from the 
+global server
 model and sends the corresponding sub-model updates back to the server
 for update aggregation. Here, is an illustration over three rounds of training on two
 participating clients - one large-capacity
@@ -44,7 +45,7 @@ python main_resnet.py --data_name CIFAR10 \
 ```
 `data_name`: CIFAR10 or CIFAR100 \
 `model_name`: resnet18 or vgg
-`control_name`: 1_{num users}_{num participating users}_{iid or non-iid-{num classes}}*_{dynamic or fix}
+`control_name`: 1_{num users}_{num participating users}_{iid or non-iid-{num classes}}_{dynamic or fix}
 _{heterogeneity distribution}_{batch norm(bn), {group norm(gn)}}_{scalar 1 or 0}_{masked cross entropy, 1 or 0} \
 `exp_name`: string value \
 `algo`: roll, random or static \
