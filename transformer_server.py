@@ -194,26 +194,26 @@ class TransformerServerRoll:
             tmp_v[count[k] > 0] = tmp_v[count[k] > 0].div_(count[k][count[k] > 0])
             v[count[k] > 0] = tmp_v[count[k] > 0].to(v.dtype)
             self.tmp_counts = tmp_counts_cpy
-        delta_t = {k: v - self.global_parameters[k] for k, v in updated_parameters.items()}
-        if self.rounds in self.cfg['milestones']:
-            self.eta *= 0.5
-        if not self.m_t or self.rounds in self.cfg['milestones']:
-            self.m_t = {k: torch.zeros_like(x) for k, x in delta_t.items()}
-        self.m_t = {
-            k: self.beta_1 * self.m_t[k] + (1 - self.beta_1) * delta_t[k] for k in delta_t.keys()
-        }
-        if not self.v_t or self.rounds in self.cfg['milestones']:
-            self.v_t = {k: torch.zeros_like(x) for k, x in delta_t.items()}
-        self.v_t = {
-            k: self.beta_2 * self.v_t[k] + (1 - self.beta_2) * torch.multiply(delta_t[k], delta_t[k])
-            for k in delta_t.keys()
-        }
-        self.global_parameters = {
-            k: self.global_parameters[k] + self.eta * self.m_t[k] / (torch.sqrt(self.v_t[k]) + self.tau)
-            for k in self.global_parameters.keys()
-        }
-
-        # self.global_parameters = updated_parameters
+        # delta_t = {k: v - self.global_parameters[k] for k, v in updated_parameters.items()}
+        # if self.rounds in self.cfg['milestones']:
+        #     self.eta *= 0.5
+        # if not self.m_t or self.rounds in self.cfg['milestones']:
+        #     self.m_t = {k: torch.zeros_like(x) for k, x in delta_t.items()}
+        # self.m_t = {
+        #     k: self.beta_1 * self.m_t[k] + (1 - self.beta_1) * delta_t[k] for k in delta_t.keys()
+        # }
+        # if not self.v_t or self.rounds in self.cfg['milestones']:
+        #     self.v_t = {k: torch.zeros_like(x) for k, x in delta_t.items()}
+        # self.v_t = {
+        #     k: self.beta_2 * self.v_t[k] + (1 - self.beta_2) * torch.multiply(delta_t[k], delta_t[k])
+        #     for k in delta_t.keys()
+        # }
+        # self.global_parameters = {
+        #     k: self.global_parameters[k] + self.eta * self.m_t[k] / (torch.sqrt(self.v_t[k]) + self.tau)
+        #     for k in self.global_parameters.keys()
+        # }
+        #
+        # # self.global_parameters = updated_parameters
         self.global_model.load_state_dict(self.global_parameters)
         return
 
@@ -299,6 +299,7 @@ class TransformerServerRandomSO(TransformerServerRollSO):
                     pass
         return idx
 
+
 class TransformerServerStaticSO(TransformerServerRollSO):
     def split_model(self, user_idx):
         cfg = self.cfg
@@ -358,4 +359,3 @@ class TransformerServerStaticSO(TransformerServerRollSO):
                 else:
                     pass
         return idx
-

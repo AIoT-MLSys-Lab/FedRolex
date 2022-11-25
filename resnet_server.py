@@ -56,8 +56,6 @@ class ResnetServerRoll:
                                       [torch.randperm(cfg['num_users'])
             [:num_active_users]].tolist())
         local_parameters, self.param_idx = self.distribute(self.user_idx)
-        # [torch.save(local_parameters[m], f'local_param_{m}') for m in range(len(local_parameters))]
-        # local_parameters = [{k: v.cpu().numpy() for k, v in p.items()} for p in local_parameters]
 
         param_ids = [ray.put(local_parameter) for local_parameter in local_parameters]
 
@@ -101,13 +99,13 @@ class ResnetServerRoll:
                                 local_output_size = int(np.ceil(output_size * scaler_rate))
                                 if self.cfg['overlap'] is None:
                                     roll = self.rounds % output_size
+                                    model_idx = torch.arange(output_size, device=v.device)
                                 else:
                                     overlap = self.cfg['overlap']
                                     self.roll_idx[k] += int(local_output_size * (1 - overlap)) + 1
                                     self.roll_idx[k] = self.roll_idx[k] % local_output_size
                                     roll = self.roll_idx[k]
-                                model_idx = self.model_idxs[k]
-                                # model_idx = self.model_idxs[k]
+                                    model_idx = self.model_idxs[k]
                                 model_idx = torch.roll(model_idx, roll, -1)
                                 output_idx_i_m = model_idx[:local_output_size]
                                 idx_i[m] = output_idx_i_m
@@ -218,40 +216,6 @@ class ResnetServerRoll:
             tmp_v[count[k] > 0] = tmp_v[count[k] > 0].div_(count[k][count[k] > 0])
             v[count[k] > 0] = tmp_v[count[k] > 0].to(v.dtype)
             self.tmp_counts = tmp_counts_cpy
-
-        # delta_t = {k: v - self.global_parameters[k] for k, v in updated_parameters.items()}
-        # if self.rounds in self.cfg['milestones']:
-        #     self.eta *= 0.5
-        # if not self.m_t or self.rounds in self.cfg['milestones']:
-        #     self.m_t = {k: torch.zeros_like(x) for k, x in delta_t.items()}
-        # self.m_t = {
-        #     k: self.beta_1 * self.m_t[k] + (1 - self.beta_1) * delta_t[k] for k in delta_t.keys()
-        # }
-        # if not self.v_t or self.rounds in self.cfg['milestones']:
-        #     self.v_t = {k: torch.zeros_like(x) for k, x in delta_t.items()}
-        # self.v_t = {
-        #     k: self.beta_2 * self.v_t[k] + (1 - self.beta_2) * torch.multiply(delta_t[k], delta_t[k])
-        #     for k in delta_t.keys()
-        # }
-        # self.global_parameters = {
-        #     k: self.global_parameters[k] + self.eta * self.m_t[k] / (torch.sqrt(self.v_t[k]) + self.tau)
-        #     for k in self.global_parameters.keys()
-        # }
-        # if not self.m_t:
-        #     self.m_t = {k: torch.zeros_like(x) for k, x in delta_t.items()}
-        # self.m_t = {
-        #     k: self.beta_1 * self.m_t[k] + (1 - self.beta_1) * delta_t[k] for k in delta_t.keys()
-        # }
-        # if not self.v_t:
-        #     self.v_t = {k: torch.zeros_like(x) for k, x in delta_t.items()}
-        # self.v_t = {
-        #     k: self.v_t[k] + torch.multiply(delta_t[k], delta_t[k])
-        #     for k in delta_t.keys()
-        # }
-        # self.global_parameters = {
-        #     k: self.global_parameters[k] + self.eta * self.m_t[k] / (torch.sqrt(self.v_t[k]) + self.tau)
-        #     for k in self.global_parameters.keys()
-        # }
         self.global_parameters = updated_parameters
         self.global_model.load_state_dict(self.global_parameters)
         return
@@ -276,12 +240,7 @@ class ResnetServerRandom(ResnetServerRoll):
                                 input_idx_i_m = idx_i[m]
                                 scaler_rate = self.model_rate[user_idx[m]] / cfg['global_model_rate']
                                 local_output_size = int(np.ceil(output_size * scaler_rate))
-                                # model_idx = self.model_idxs[k][m % self.num_model_partitions]
-                                # output_idx_i_m = model_idx[:local_output_size]
-                                roll = self.rounds % output_size
-                                # model_idx = self.model_idxs[k][self.rounds % self.num_model_partitions]
                                 model_idx = torch.randperm(output_size, device=v.device)
-                                # model_idx = torch.roll(model_idx, roll, -1)
                                 output_idx_i_m = model_idx[:local_output_size]
                                 idx_i[m] = output_idx_i_m
                             elif 'shortcut' in k:
@@ -310,7 +269,7 @@ class ResnetServerRandom(ResnetServerRoll):
         return idx
 
 
-class ResnetServerOrig(ResnetServerRoll):
+class ResnetServerStatic(ResnetServerRoll):
     def split_model(self, user_idx):
         cfg = self.cfg
         idx_i = [None for _ in range(len(user_idx))]
@@ -329,12 +288,7 @@ class ResnetServerOrig(ResnetServerRoll):
                                 input_idx_i_m = idx_i[m]
                                 scaler_rate = self.model_rate[user_idx[m]] / cfg['global_model_rate']
                                 local_output_size = int(np.ceil(output_size * scaler_rate))
-                                # model_idx = self.model_idxs[k][m % self.num_model_partitions]
-                                # output_idx_i_m = model_idx[:local_output_size]
-                                roll = self.rounds % output_size
-                                # model_idx = self.model_idxs[k][self.rounds % self.num_model_partitions]
                                 model_idx = torch.arange(output_size, device=v.device)
-                                # model_idx = torch.roll(model_idx, roll, -1)
                                 output_idx_i_m = model_idx[:local_output_size]
                                 idx_i[m] = output_idx_i_m
                             elif 'shortcut' in k:

@@ -46,7 +46,7 @@ if args['algo'] == 'roll':
 elif args['algo'] == 'random':
     from resnet_server import ResnetServerRandom as Server
 elif args['algo'] == 'orig':
-    from resnet_server import ResnetServerOrig as Server
+    from resnet_server import ResnetServerStatic as Server
 if args['devices'] is not None:
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join([str(i) for i in args['devices']])
 for k in cfg:
