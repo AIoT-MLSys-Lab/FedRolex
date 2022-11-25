@@ -5,14 +5,12 @@ import os
 import random
 import shutil
 import time
-from typing import List
 
 import numpy as np
 import ray
 import torch
 import torch.backends.cudnn as cudnn
 
-import models
 from config import cfg
 from data import fetch_dataset, make_data_loader, split_dataset
 from logger import Logger
@@ -53,7 +51,7 @@ if args['algo'] == 'roll':
     from resnet_server import ResnetServerRoll as Server
 elif args['algo'] == 'random':
     from resnet_server import ResnetServerRandom as Server
-elif args['algo'] == 'orig':
+elif args['algo'] == 'static':
     from resnet_server import ResnetServerStatic as Server
 if args['devices'] is not None:
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join([str(i) for i in args['devices']])

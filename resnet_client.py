@@ -4,7 +4,6 @@ import time
 import ray
 import torch
 
-import models
 from data import SplitDataset, make_data_loader
 from logger import Logger
 from metrics import Metric

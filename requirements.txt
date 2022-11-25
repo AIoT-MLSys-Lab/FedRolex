@@ -1,0 +1,9 @@
+numpy~=1.23.0
+torch~=1.11.0
+torchvision~=0.12.0
+anytree~=2.8.0
+Pillow~=9.0.1
+tqdm~=4.64.0
+PyYAML~=5.4.1
+matplotlib~=3.3.4
+ray~=1.13.0

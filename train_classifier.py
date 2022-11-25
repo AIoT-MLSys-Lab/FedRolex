@@ -31,6 +31,8 @@ cfg['pivot_metric'] = 'Global-Accuracy'
 cfg['pivot'] = -float('inf')
 cfg['metric_name'] = {'train': {'Local': ['Local-Loss', 'Local-Accuracy']},
                       'test': {'Local': ['Local-Loss', 'Local-Accuracy'], 'Global': ['Global-Loss', 'Global-Accuracy']}}
+
+
 def main():
     process_control()
     seeds = list(range(cfg['init_seed'], cfg['init_seed'] + cfg['num_experiments']))

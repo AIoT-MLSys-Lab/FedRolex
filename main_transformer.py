@@ -6,22 +6,18 @@ import random
 import shutil
 import time
 
-from tqdm import tqdm
-
-from datasets.lm import Vocab
 import numpy as np
 import ray
 import torch
 import torch.backends.cudnn as cudnn
+from tqdm import tqdm
 
 import models
 from config import cfg
-from data import fetch_dataset, split_dataset, BatchDataset
+from data import fetch_dataset
 from logger import Logger
-from metrics import Metric
 from transformer_client import TransformerClient
-from transformer_server import TransformerServerRoll
-from utils import save, to_device, process_control, process_dataset, make_optimizer, make_scheduler
+from utils import save, process_control, process_dataset, make_optimizer, make_scheduler
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -49,7 +45,7 @@ if args['algo'] == 'roll':
     from transformer_server import TransformerServerRollSO as Server
 elif args['algo'] == 'random':
     from transformer_server import TransformerServerRandomSO as Server
-elif args['algo'] == 'orig':
+elif args['algo'] == 'static':
     from transformer_server import TransformerServerStaticSO as Server
 
 args = vars(parser.parse_args())
@@ -72,18 +68,19 @@ cfg['metric_name'] = {'train': {'Local': ['Local-Loss', 'Local-Perplexity']},
 # ray.init(_temp_dir='/localscratch/alamsami/tmp', object_store_memory=10**11)
 
 ray.init(
-    _temp_dir='/localscratch/alamsami/tmp', object_store_memory=10**11,
+    _temp_dir='/localscratch/alamsami/tmp', object_store_memory=10 ** 11,
     _system_config={
         "object_spilling_config": json.dumps(
             {
-              "type": "filesystem",
-              "params": {
-                "directory_path": '/egr/research-zhanglambda/samiul/tmp',
-              }
+                "type": "filesystem",
+                "params": {
+                    "directory_path": '/egr/research-zhanglambda/samiul/tmp',
+                }
             },
         )
     },
 )
+
 
 def main():
     process_control()
@@ -143,11 +140,11 @@ def run_experiment():
         start_time = time.time()
         local_parameters = []
         for user_start_idx in range(0, num_active_users, num_users_per_step):
-            idxs = list(range(user_start_idx, min(num_active_users, user_start_idx+num_users_per_step)))
+            idxs = list(range(user_start_idx, min(num_active_users, user_start_idx + num_users_per_step)))
             sel_cfg = [configs[idx] for idx in idxs]
             [client.update.remote(*config) for client, config in zip(local, sel_cfg)]
-            dt = ray.get([client.step.remote(user_start_idx+m, num_active_users, start_time)
-                            for m, client in enumerate(local[:len(sel_cfg)])])
+            dt = ray.get([client.step.remote(user_start_idx + m, num_active_users, start_time)
+                          for m, client in enumerate(local[:len(sel_cfg)])])
             local_parameters += [v for _k, v in enumerate(dt)]
             torch.cuda.empty_cache()
         t2 = time.time()
@@ -192,8 +189,8 @@ def run_experiment():
 
 def test(dataset, model, logger, epoch, local):
     num_users_per_step = len(local)
-    num_test_users = 200#len(dataset)
-    if epoch%600 == 0:
+    num_test_users = 200  # len(dataset)
+    if epoch % 600 == 0:
         num_test_users = 5000
     model_id = ray.put(model)
     with torch.no_grad():
@@ -201,8 +198,8 @@ def test(dataset, model, logger, epoch, local):
         sel_cl = np.random.choice(len(dataset), num_test_users)
         for user_start_idx in tqdm(range(0, num_test_users, num_users_per_step)):
             processes = []
-            for user_idx in range(user_start_idx, min(user_start_idx+num_users_per_step, num_test_users)):
-                processes.append(local[user_idx%num_users_per_step]
+            for user_idx in range(user_start_idx, min(user_start_idx + num_users_per_step, num_test_users)):
+                processes.append(local[user_idx % num_users_per_step]
                                  .test_model_for_user
                                  .remote(user_idx,
                                          [ray.put(dataset[sel_cl[user_idx]]), model_id]))

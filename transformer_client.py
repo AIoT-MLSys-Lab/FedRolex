@@ -6,7 +6,6 @@ import ray
 import torch
 
 import models
-from data import SplitDataset
 from datasets.lm import StackOverflowClientDataset
 from logger import Logger
 from metrics import Metric
@@ -105,8 +104,7 @@ class TransformerClient:
             output = model(data_input)
             output['loss'] = output['loss'].mean() if cfg['world_size'] > 1 else output['loss']
             s = output['score'].shape
-            output['score'] = output['score'].permute((0, 2, 1)).reshape((s[0]*s[2], -1))
-            # output['score'] = output['score'].permute((0, 2, 1))[:, -1, :].reshape((s[0], -1))
+            output['score'] = output['score'].permute((0, 2, 1)).reshape((s[0] * s[2], -1))
             data_input['label'] = data_input['label'].reshape((-1,))
             evaluation = metric.evaluate(cfg['metric_name']['test']['Local'], data_input, output)
             results.append((evaluation, input_size))

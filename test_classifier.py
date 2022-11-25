@@ -8,7 +8,6 @@ from config import cfg
 from data import fetch_dataset, make_data_loader, SplitDataset
 from logger import Logger
 from metrics import Metric
-from models import resnet
 from utils import save, to_device, process_control, process_dataset, resume, collate
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'

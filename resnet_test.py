@@ -1,23 +1,14 @@
 import argparse
-import copy
-import datetime
 import os
-import random
-import shutil
-import time
 
-import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 
-import models
 from config import cfg
-from data import fetch_dataset, make_data_loader, split_dataset, SplitDataset
+from data import fetch_dataset, make_data_loader, SplitDataset
 from logger import Logger
 from metrics import Metric
-from resnet_client import ResnetClient
-from models import resnet
-from utils import save, to_device, process_control, process_dataset, make_optimizer, make_scheduler, collate, resume
+from utils import save, to_device, process_control, process_dataset, collate, resume
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -42,11 +33,11 @@ parser.add_argument('--schedule', default=None, nargs='+', type=int)
 args = vars(parser.parse_args())
 cfg['init_seed'] = int(args['seed'])
 if args['algo'] == 'roll':
-    from resnet_server import ResnetServerRoll as Server
+    pass
 elif args['algo'] == 'random':
-    from resnet_server import ResnetServerRandom as Server
-elif args['algo'] == 'orig':
-    from resnet_server import ResnetServerStatic as Server
+    pass
+elif args['algo'] == 'static':
+    pass
 if args['devices'] is not None:
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join([str(i) for i in args['devices']])
 for k in cfg:
@@ -59,8 +50,6 @@ cfg['pivot_metric'] = 'Global-Accuracy'
 cfg['pivot'] = -float('inf')
 cfg['metric_name'] = {'train': {'Local': ['Local-Loss', 'Local-Accuracy']},
                       'test': {'Local': ['Local-Loss', 'Local-Accuracy'], 'Global': ['Global-Loss', 'Global-Accuracy']}}
-
-
 
 
 def main():
