@@ -9,7 +9,7 @@ The repository is built upon [HeteroFL](https://github.com/dem123456789/HeteroFL
 
 # Overview
 
-Most cross-device federated learning studies focus on the model-homogeneous setting where the global server model and local client models are identical. However, such constraint not only excludes low-end clients who would otherwise make unique contributions to model training but also restrains clients from training large models due to on-device resource bottlenecks. In this work, we propose FedRolex, a partial training-based approach that enables model-heterogeneous FL and can train a global server model larger than the largest client model. 
+Most cross-device federated learning studies focus on the model-homogeneous setting where the global server model and local client models are identical. However, such constraint not only excludes low-end clients who would otherwise make unique contributions to model training but also restrains clients from training large models due to on-device resource bottlenecks. We propose FedRolex, a partial training-based approach that enables model-heterogeneous FL and can train a global server model larger than the largest client model. 
 
 ![tab:feature_comp](figures/table_overview.png) A quick overview of different model heterogeneous federated learning
 algorithms is shown here. `FedRolex` is among a group of model heterogeneous algorithms that
