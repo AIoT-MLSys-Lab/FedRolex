@@ -15,7 +15,7 @@ Most cross-device federated learning studies focus on the model-homogeneous sett
 
 The key difference between `FedRolex` and existing partial training-based methods is how the sub-models are extracted for each client over communication rounds in the federated training process. Specifically, instead of extracting sub-models in either random or static manner, `FedRolex` proposes a <b>rolling sub-model extraction scheme</b>, where the sub-model is extracted from the global server model using a rolling window that advances in each communication round. Since the window is rolling, sub-models from different parts of the global model are extracted in sequence in different rounds. As a result, all the parameters of the global server model are evenly trained over the local data of client devices.
 
-<img src="figures/fedrolex_overview.png" alt="fedrolex" width="90%">
+<img src="figures/fedrolex_overview.png" alt="fedrolex" width="50%">
 
 
 # Usage
