@@ -1,4 +1,4 @@
-# FedAudio: A Federated Learning Benchmark for Audio Tasks
+# FedAudio: FedRolex: Model-Heterogeneous Federated Learning with Rolling Sub-Model Extraction
 
 This is the official implementation of ["FedRolex: Model-Heterogeneous Federated Learning with Rolling Sub-Model
 Extraction"](https://openreview.net/forum?id=OtxyysUdBE).
