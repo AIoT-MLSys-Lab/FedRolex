@@ -5,7 +5,7 @@ Code for paper:
 > Samiul Alam, Luyang Liu, Ming Yan, and Mi Zhang.\
 > _NeurIPS 2022_.
 
-The repository is built upon [HeteroFL]([https://github.com/rusty1s/pytorch_geometric](https://github.com/dem123456789/HeteroFL-Computation-and-Communication-Efficient-Federated-Learning-for-Heterogeneous-Clients)). 
+The repository is built upon [HeteroFL](https://github.com/dem123456789/HeteroFL-Computation-and-Communication-Efficient-Federated-Learning-for-Heterogeneous-Clients). 
 
 # Overview
 
