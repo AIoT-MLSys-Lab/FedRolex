@@ -9,23 +9,13 @@ The repository is built upon [HeteroFL](https://github.com/dem123456789/HeteroFL
 
 # Overview
 
-Most cross-device federated learning studies focus on the model-homogeneous setting where the global server model and local client models are identical. However, such constraint not only excludes low-end clients who would otherwise make unique contributions to model training but also restrains clients from training <b>large models</b> due to on-device resource bottlenecks. We propose FedRolex, a partial training-based approach that enables <b>model-heterogeneous FL </b>and can train a global server model larger than the largest client model. 
+Most cross-device federated learning studies focus on the model-homogeneous setting where the global server model and local client models are identical. However, such constraint not only excludes low-end clients who would otherwise make unique contributions to model training but also restrains clients from training <b>large models</b> due to on-device resource bottlenecks. We propose `FedRolex`, a partial training-based approach that enables <b>model-heterogeneous FL </b>and can train a global server model larger than the largest client model. 
 
-![tab:feature_comp](figures/table_overview.png) A quick overview of different model heterogeneous federated learning
-algorithms is shown here. `FedRolex` is among a group of model heterogeneous algorithms that
-use partial training to train a server model from
-a heterogeneous federation of client devices.
-![fig:overview](figures/fedrolex_overview.png) `FedRolex` trains only a sub-model extracted from the 
-global server
-model and sends the corresponding sub-model updates back to the server
-for update aggregation. Here, is an illustration over three rounds of training on two
-participating clients - one large-capacity
-sub-model (left) and the other, a small-capacity one (right). The server extracts sub-models of
-different capacities from the global model and separately broadcasts
-them to the clients that have the corresponding capabilities. The
-clients train the received sub-models on their local data and transmit
-their heterogeneous sub-model updates to the server. Lastly, the server
-aggregates those updates.
+![tab:feature_comp](figures/table_overview.png) 
+
+`FedRolex` trains only a sub-model extracted from the global server model and sends the corresponding sub-model updates back to the server for update aggregation. Here, is an illustration over three rounds of training on two participating clients - one large-capacity sub-model (left) and the other, a small-capacity one (right). The server extracts sub-models of different capacities from the global model and separately broadcasts them to the clients that have the corresponding capabilities. The clients train the received sub-models on their local data and transmit their heterogeneous sub-model updates to the server. Lastly, the server aggregates those updates.
+
+![fig:overview](figures/fedrolex_overview.png) 
 
 # Usage
 ## Setup
