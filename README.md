@@ -1,7 +1,9 @@
 # FedRolex: Model-Heterogeneous Federated Learning with Rolling Sub-Model Extraction
 
-This is the official implementation of ["FedRolex: Model-Heterogeneous Federated Learning with Rolling Sub-Model
-Extraction"](https://openreview.net/forum?id=OtxyysUdBE).
+Code for paper:
+> [FedRolex: Model-Heterogeneous Federated Learning with Rolling Sub-Model Extraction]([https://arxiv.org/abs/2006.06936](https://openreview.net/forum?id=OtxyysUdBE))\
+> Samiul Alam, Luyang Liu, Ming Yan, and Mi Zhang.\
+> _NeurIPS 2022_.
 
 # Overview
 
