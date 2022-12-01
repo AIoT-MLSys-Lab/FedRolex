@@ -21,6 +21,11 @@ The key difference between `FedRolex` and existing partial training-based method
 <img src="figures/fedrolex_overview.png" alt="fedrolex" width="50%">
 </p>
 
+# Video Brief
+Click the figure to watch this short video explaining our work.
+
+[![slideslive_link](figures/video_placeholder.png)](https://recorder-v3.slideslive.com/#/share?share=74286&s=8264b1ae-a2a0-459d-aa99-88d7baf2d51f)
+
 # Usage
 ## Setup
 ```commandline
