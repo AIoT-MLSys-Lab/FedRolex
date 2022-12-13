@@ -92,6 +92,56 @@ python main_resnet.py --data_name CIFAR10 \
                       --num_experiments 3 \
                       --devices 0 1 2
 ```
+To reproduce the results of on Table 3 in the paper please run the following commands:
+
+CIFAR-10
+``` commandline
+python main_resnet.py --data_name CIFAR10 \
+                      --model_name resnet18 \
+                      --control_name 1_100_0.1_iid_dynamic_a1-b1-c1-d1-e1_bn_1_1 \ 
+                      --exp_name homogeneous_largest_low_heterogeneity \
+                      --algo static \
+                      --g_epoch 3200 \
+                      --l_epoch 1 \
+                      --lr 2e-4 \
+                      --schedule 800 1200 \ 
+                      --seed 31 \
+                      --num_experiments 5 \
+                      --devices 0 1 2
+```
+CIFAR-100
+``` commandline
+python main_resnet.py --data_name CIFAR100 \
+                      --model_name resnet18 \
+                      --control_name 1_100_0.1_iid_dynamic_a1-b1-c1-d1-e1_bn_1_1 \ 
+                      --exp_name homogeneous_largest_low_heterogeneity \
+                      --algo static \
+                      --g_epoch 2500 \
+                      --l_epoch 1 \
+                      --lr 2e-4 \
+                      --schedule 800 1200 \ 
+                      --seed 31 \
+                      --num_experiments 5 \
+                      --devices 0 1 2
+```
+StackOverflow
+```commandline
+python main_transformer.py --data_name Stackoverflow \
+                           --model_name transformer \
+                           --control_name 1_100_0.1_iid_dynamic_a1-b1-c1-d1-e1_bn_1_1 \
+                           --exp_name roll_so_test \
+                           --algo roll \
+                           --g_epoch 1500 \ 
+                           --l_epoch 1 \
+                           --lr 2e-4 \
+                           --schedule 600 1000 \
+                           --seed 31 \
+                           --num_experiments 5 \
+                           --devices 0 1 2 3 4 5 6 7
+```
+
+Note: To get the results based on the real world distribution as in Table 4, use `a6-b10-c11-d18-e55` as the 
+distribution.
 
 ## Citation
 If you find this useful for your work, please consider citing:
