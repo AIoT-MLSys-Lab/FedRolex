@@ -193,7 +193,7 @@ def test(dataset, data_split, label_split, model, logger, epoch, local):
             processes = []
             for k in range(m, min(m + len(local), cfg['num_users'])):
                 processes.append(local[k % len(local)]
-                                 .test_model_for_user.remote(m,
+                                 .test_model_for_user.remote(k,
                                                              [dataset_id, data_split_id, model_id, label_split_id]))
             results = ray.get(processes)
             for result in results:
