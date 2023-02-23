@@ -113,7 +113,6 @@ def test(dataset, data_split, label_split, model, logger, epoch):
                 evaluation = metric.evaluate(cfg['metric_name']['test']['Local'], input, output)
                 logger.append(evaluation, 'test', input_size)
 
-
         data_loader = make_data_loader({'test': dataset})['test']
         for i, input in enumerate(data_loader):
             input = collate(input)
