@@ -198,8 +198,10 @@ def test(dataset, data_split, label_split, model, logger, epoch, local):
             results = ray.get(processes)
             for result in results:
                 all_res.append(result)
-                evaluation, input_size = result[0]
-                logger.append(evaluation, 'test', input_size)
+                for r in result:
+                    evaluation, input_size = r
+                    logger.append(evaluation, 'test', input_size)
+        # Save all_res for plotting
         # torch.save((all_res, rates), f'./output/runs/{cfg["model_tag"]}_real_world.pt')
         data_loader = make_data_loader({'test': dataset})['test']
         metric = Metric()

@@ -168,11 +168,11 @@ def process_control():
         cfg['factor'] = 0.1
         if cfg['data_split_mode'] == 'iid':
             # cfg['num_epochs'] = {'global': 200, 'local': 5}
-            cfg['batch_size'] = {'train': 24, 'test': 50}
+            cfg['batch_size'] = {'train': 24, 'test': 100}
             # cfg['milestones'] = [100]
         elif 'non-iid' in cfg['data_split_mode']:
             # cfg['num_epochs'] = {'global': 400, 'local': 5}
-            cfg['batch_size'] = {'train': 10, 'test': 50}
+            cfg['batch_size'] = {'train': 10, 'test': 100}
             cfg['milestones'] = [200]
         elif cfg['data_split_mode'] == 'none':
             cfg['num_epochs'] = 200
@@ -191,11 +191,11 @@ def process_control():
         cfg['factor'] = 0.25
         if cfg['data_split_mode'] == 'iid':
             # cfg['num_epochs'] = {'global': 2500, 'local': 1}
-            cfg['batch_size'] = {'train': 10, 'test': 50}
+            cfg['batch_size'] = {'train': 10, 'test': 100}
             # cfg['milestones'] = [1000, 1500, 2000]
         elif 'non-iid' in cfg['data_split_mode']:
             # cfg['num_epochs'] = {'global': 2500, 'local': 1}
-            cfg['batch_size'] = {'train': 10, 'test': 50}
+            cfg['batch_size'] = {'train': 10, 'test': 100}
             # cfg['milestones'] = [1000, 1500, 2000]
         elif cfg['data_split_mode'] == 'none':
             cfg['num_epochs'] = 400

@@ -112,7 +112,8 @@ def test(dataset, data_split, label_split, model, logger, epoch):
                 output['loss'] = output['loss'].mean() if cfg['world_size'] > 1 else output['loss']
                 evaluation = metric.evaluate(cfg['metric_name']['test']['Local'], input, output)
                 logger.append(evaluation, 'test', input_size)
-                print(evaluation)
+
+
         data_loader = make_data_loader({'test': dataset})['test']
         for i, input in enumerate(data_loader):
             input = collate(input)
