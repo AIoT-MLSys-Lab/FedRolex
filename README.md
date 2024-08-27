@@ -147,14 +147,11 @@ distribution.
 If you find this useful for your work, please consider citing:
 
 ```
-@article{
-alam2024fedaiot,
-title={Fed{AI}oT: A Federated Learning Benchmark for Artificial Intelligence of Things},
-author={Samiul Alam and Tuo Zhang and Tiantian Feng and Hui Shen and Zhichao Cao and Dong Zhao and Jeonggil Ko and Kiran Somasundaram and Shrikanth Narayanan and Salman Avestimehr and Mi Zhang},
-journal={Journal of Data-centric Machine Learning Research},
-year={2024},
-url={https://openreview.net/forum?id=fYNw9Ukljz},
-note={Dataset Certification}
+@InProceedings{alam2022fedrolex,
+  title = {FedRolex: Model-Heterogeneous Federated Learning with Rolling Sub-Model Extraction},
+  author = {Alam, Samiul and Liu, Luyang and Yan, Ming and Zhang, Mi},
+  booktitle = {Conference on Neural Information Processing Systems (NeurIPS)},
+  year = {2022}
 }
 ```
 
